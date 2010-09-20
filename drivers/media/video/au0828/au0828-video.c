@@ -783,7 +783,17 @@ static int au0828_v4l2_open(struct file *filp)
 	videobuf_queue_vmalloc_init(&fh->vb_vidq, &au0828_video_qops,
 				    NULL, &dev->slock, fh->type,
 				    V4L2_FIELD_INTERLACED,
-				    sizeof(struct au0828_buffer), fh);
+				    sizeof(struct au0828_buffer), fh, NULL);
+
+	/* VBI Setup */
+	dev->vbi_width = 720;
+	dev->vbi_height = 1;
+	videobuf_queue_vmalloc_init(&fh->vb_vbiq, &au0828_vbi_qops,
+				    NULL, &dev->slock,
+				    V4L2_BUF_TYPE_VBI_CAPTURE,
+				    V4L2_FIELD_SEQ_TB,
+				    sizeof(struct au0828_buffer), fh, NULL);
+
 
 	return ret;
 }
