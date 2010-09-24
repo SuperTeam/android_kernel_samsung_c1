@@ -601,7 +601,7 @@ static int fimc_configure_subdev(struct fimc_control *ctrl)
 	 * so nothing happens but pass platform data through
 	 */
 	sd = v4l2_i2c_new_subdev_board(&ctrl->v4l2_dev, i2c_adap,
-			name, i2c_info, &addr);
+			i2c_info, &addr);
 	if (!sd) {
 		fimc_err("%s: v4l2 subdev board registering failed\n",
 				__func__);

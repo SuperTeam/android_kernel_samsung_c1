@@ -198,47 +198,12 @@ static int init_i2c_module(struct i2c_adapter *adapter, const char *type,
 {
 	struct go7007 *go = i2c_get_adapdata(adapter);
 	struct v4l2_device *v4l2_dev = &go->v4l2_dev;
-	char *modname;
 
-	switch (id) {
-	case I2C_DRIVERID_WIS_SAA7115:
-		modname = "wis-saa7115";
-		break;
-	case I2C_DRIVERID_WIS_SAA7113:
-		modname = "wis-saa7113";
-		break;
-	case I2C_DRIVERID_WIS_UDA1342:
-		modname = "wis-uda1342";
-		break;
-	case I2C_DRIVERID_WIS_SONY_TUNER:
-		modname = "wis-sony-tuner";
-		break;
-	case I2C_DRIVERID_WIS_TW9903:
-		modname = "wis-tw9903";
-		break;
-	case I2C_DRIVERID_WIS_TW2804:
-		modname = "wis-tw2804";
-		break;
-	case I2C_DRIVERID_WIS_OV7640:
-		modname = "wis-ov7640";
-		break;
-	case I2C_DRIVERID_S2250:
-		modname = "s2250";
-		break;
-	default:
-		modname = NULL;
-		break;
-	}
-
-	if (v4l2_i2c_new_subdev(v4l2_dev, adapter, modname, type, addr, NULL))
+	if (v4l2_i2c_new_subdev(v4l2_dev, adapter, type, addr, NULL))
 		return 0;
 
-	if (modname != NULL)
-		printk(KERN_INFO
-			"go7007: probing for module %s failed\n", modname);
-	else
-		printk(KERN_INFO
-			"go7007: sensor %u seems to be unsupported!\n", id);
+	printk(KERN_INFO
+		"go7007: sensor %u seems to be unsupported!\n", id);
 	return -1;
 }
 
