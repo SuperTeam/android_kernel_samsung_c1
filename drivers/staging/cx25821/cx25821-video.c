@@ -1151,34 +1151,6 @@ int cx25821_vidioc_enum_fmt_vid_cap(struct file *file, void *priv,
 	return 0;
 }
 
-#ifdef CONFIG_VIDEO_V4L1_COMPAT
-int cx25821_vidiocgmbuf(struct file *file, void *priv, struct video_mbuf *mbuf)
-{
-	struct cx25821_fh *fh = priv;
-	struct videobuf_queue *q;
-	struct v4l2_requestbuffers req;
-	unsigned int i;
-	int err;
-
-	q = get_queue(fh);
-	memset(&req, 0, sizeof(req));
-	req.type = q->type;
-	req.count = 8;
-	req.memory = V4L2_MEMORY_MMAP;
-	err = videobuf_reqbufs(q, &req);
-	if (err < 0)
-		return err;
-
-	mbuf->frames = req.count;
-	mbuf->size = 0;
-	for (i = 0; i < mbuf->frames; i++) {
-		mbuf->offsets[i] = q->bufs[i]->boff;
-		mbuf->size += q->bufs[i]->bsize;
-	}
-	return 0;
-}
-#endif
-
 int cx25821_vidioc_reqbufs(struct file *file, void *priv, struct v4l2_requestbuffers *p)
 {
 	struct cx25821_fh *fh = priv;
@@ -1675,3 +1647,314 @@ int cx25821_is_valid_height(u32 height, v4l2_std_id tvnorm)
 
 	return 0;
 }
+
+static long video_ioctl_upstream9(struct file *file, unsigned int cmd,
+				 unsigned long arg)
+{
+       struct cx25821_fh *fh = file->private_data;
+       struct cx25821_dev *dev = fh->dev;
+       int command = 0;
+       struct upstream_user_struct *data_from_user;
+
+       data_from_user = (struct upstream_user_struct *)arg;
+
+	if (!data_from_user) {
+		pr_err("%s(): Upstream data is INVALID. Returning\n", __func__);
+		return 0;
+	}
+
+       command = data_from_user->command;
+
+       if (command != UPSTREAM_START_VIDEO &&
+	       command != UPSTREAM_STOP_VIDEO)
+	       return 0;
+
+       dev->input_filename = data_from_user->input_filename;
+       dev->input_audiofilename = data_from_user->input_filename;
+       dev->vid_stdname = data_from_user->vid_stdname;
+       dev->pixel_format = data_from_user->pixel_format;
+       dev->channel_select = data_from_user->channel_select;
+       dev->command = data_from_user->command;
+
+       switch (command) {
+       case UPSTREAM_START_VIDEO:
+	       cx25821_start_upstream_video_ch1(dev, data_from_user);
+	       break;
+
+       case UPSTREAM_STOP_VIDEO:
+	       cx25821_stop_upstream_video_ch1(dev);
+	       break;
+       }
+
+       return 0;
+}
+
+static long video_ioctl_upstream10(struct file *file, unsigned int cmd,
+				  unsigned long arg)
+{
+       struct cx25821_fh *fh = file->private_data;
+       struct cx25821_dev *dev = fh->dev;
+       int command = 0;
+       struct upstream_user_struct *data_from_user;
+
+       data_from_user = (struct upstream_user_struct *)arg;
+
+	if (!data_from_user) {
+		pr_err("%s(): Upstream data is INVALID. Returning\n", __func__);
+		return 0;
+	}
+
+       command = data_from_user->command;
+
+       if (command != UPSTREAM_START_VIDEO &&
+	       command != UPSTREAM_STOP_VIDEO)
+	       return 0;
+
+       dev->input_filename_ch2 = data_from_user->input_filename;
+       dev->input_audiofilename = data_from_user->input_filename;
+       dev->vid_stdname_ch2 = data_from_user->vid_stdname;
+       dev->pixel_format_ch2 = data_from_user->pixel_format;
+       dev->channel_select_ch2 = data_from_user->channel_select;
+       dev->command_ch2 = data_from_user->command;
+
+       switch (command) {
+       case UPSTREAM_START_VIDEO:
+	       cx25821_start_upstream_video_ch2(dev, data_from_user);
+	       break;
+
+       case UPSTREAM_STOP_VIDEO:
+	       cx25821_stop_upstream_video_ch2(dev);
+	       break;
+       }
+
+       return 0;
+}
+
+static long video_ioctl_upstream11(struct file *file, unsigned int cmd,
+				  unsigned long arg)
+{
+       struct cx25821_fh *fh = file->private_data;
+       struct cx25821_dev *dev = fh->dev;
+       int command = 0;
+       struct upstream_user_struct *data_from_user;
+
+       data_from_user = (struct upstream_user_struct *)arg;
+
+	if (!data_from_user) {
+		pr_err("%s(): Upstream data is INVALID. Returning\n", __func__);
+		return 0;
+	}
+
+       command = data_from_user->command;
+
+       if (command != UPSTREAM_START_AUDIO &&
+	       command != UPSTREAM_STOP_AUDIO)
+	       return 0;
+
+       dev->input_filename = data_from_user->input_filename;
+       dev->input_audiofilename = data_from_user->input_filename;
+       dev->vid_stdname = data_from_user->vid_stdname;
+       dev->pixel_format = data_from_user->pixel_format;
+       dev->channel_select = data_from_user->channel_select;
+       dev->command = data_from_user->command;
+
+       switch (command) {
+       case UPSTREAM_START_AUDIO:
+	       cx25821_start_upstream_audio(dev, data_from_user);
+	       break;
+
+       case UPSTREAM_STOP_AUDIO:
+	       cx25821_stop_upstream_audio(dev);
+	       break;
+       }
+
+       return 0;
+}
+
+static long video_ioctl_set(struct file *file, unsigned int cmd,
+			   unsigned long arg)
+{
+       struct cx25821_fh *fh = file->private_data;
+       struct cx25821_dev *dev = fh->dev;
+       struct downstream_user_struct *data_from_user;
+       int command;
+       int width = 720;
+       int selected_channel = 0, pix_format = 0, i = 0;
+       int cif_enable = 0, cif_width = 0;
+       u32 value = 0;
+
+       data_from_user = (struct downstream_user_struct *)arg;
+
+	if (!data_from_user) {
+		pr_err("%s(): User data is INVALID. Returning\n", __func__);
+		return 0;
+	}
+
+       command = data_from_user->command;
+
+       if (command != SET_VIDEO_STD && command != SET_PIXEL_FORMAT
+	   && command != ENABLE_CIF_RESOLUTION && command != REG_READ
+	   && command != REG_WRITE && command != MEDUSA_READ
+	   && command != MEDUSA_WRITE) {
+	       return 0;
+       }
+
+       switch (command) {
+       case SET_VIDEO_STD:
+	       dev->tvnorm =
+		   !strcmp(data_from_user->vid_stdname,
+			   "PAL") ? V4L2_STD_PAL_BG : V4L2_STD_NTSC_M;
+	       medusa_set_videostandard(dev);
+	       break;
+
+       case SET_PIXEL_FORMAT:
+	       selected_channel = data_from_user->decoder_select;
+	       pix_format = data_from_user->pixel_format;
+
+	       if (!(selected_channel <= 7 && selected_channel >= 0)) {
+		       selected_channel -= 4;
+		       selected_channel = selected_channel % 8;
+	       }
+
+	       if (selected_channel >= 0)
+		       cx25821_set_pixel_format(dev, selected_channel,
+						pix_format);
+
+	       break;
+
+       case ENABLE_CIF_RESOLUTION:
+	       selected_channel = data_from_user->decoder_select;
+	       cif_enable = data_from_user->cif_resolution_enable;
+	       cif_width = data_from_user->cif_width;
+
+	       if (cif_enable) {
+		       if (dev->tvnorm & V4L2_STD_PAL_BG
+			   || dev->tvnorm & V4L2_STD_PAL_DK)
+			       width = 352;
+		       else
+			       width = (cif_width == 320
+					|| cif_width == 352) ? cif_width : 320;
+	       }
+
+	       if (!(selected_channel <= 7 && selected_channel >= 0)) {
+		       selected_channel -= 4;
+		       selected_channel = selected_channel % 8;
+	       }
+
+	       if (selected_channel <= 7 && selected_channel >= 0) {
+		       dev->channels[selected_channel].
+			       use_cif_resolution = cif_enable;
+		       dev->channels[selected_channel].cif_width = width;
+	       } else {
+		       for (i = 0; i < VID_CHANNEL_NUM; i++) {
+			       dev->channels[i].use_cif_resolution =
+				       cif_enable;
+			       dev->channels[i].cif_width = width;
+		       }
+	       }
+
+	       medusa_set_resolution(dev, width, selected_channel);
+	       break;
+       case REG_READ:
+	       data_from_user->reg_data = cx_read(data_from_user->reg_address);
+	       break;
+       case REG_WRITE:
+	       cx_write(data_from_user->reg_address, data_from_user->reg_data);
+	       break;
+       case MEDUSA_READ:
+	       value =
+		   cx25821_i2c_read(&dev->i2c_bus[0],
+				    (u16) data_from_user->reg_address,
+				    &data_from_user->reg_data);
+	       break;
+       case MEDUSA_WRITE:
+	       cx25821_i2c_write(&dev->i2c_bus[0],
+				 (u16) data_from_user->reg_address,
+				 data_from_user->reg_data);
+	       break;
+       }
+
+       return 0;
+}
+
+static long cx25821_video_ioctl(struct file *file,
+			       unsigned int cmd, unsigned long arg)
+{
+       int  ret = 0;
+
+       struct cx25821_fh  *fh  = file->private_data;
+
+       /* check to see if it's the video upstream */
+       if (fh->channel_id == SRAM_CH09) {
+	       ret = video_ioctl_upstream9(file, cmd, arg);
+	       return ret;
+       } else if (fh->channel_id == SRAM_CH10) {
+	       ret = video_ioctl_upstream10(file, cmd, arg);
+	       return ret;
+       } else if (fh->channel_id == SRAM_CH11) {
+	       ret = video_ioctl_upstream11(file, cmd, arg);
+	       ret = video_ioctl_set(file, cmd, arg);
+	       return ret;
+       }
+
+    return video_ioctl2(file, cmd, arg);
+}
+
+/* exported stuff */
+static const struct v4l2_file_operations video_fops = {
+       .owner = THIS_MODULE,
+       .open = video_open,
+       .release = video_release,
+       .read = video_read,
+       .poll = video_poll,
+       .mmap = cx25821_video_mmap,
+       .ioctl = cx25821_video_ioctl,
+};
+
+static const struct v4l2_ioctl_ops video_ioctl_ops = {
+       .vidioc_querycap = cx25821_vidioc_querycap,
+       .vidioc_enum_fmt_vid_cap = cx25821_vidioc_enum_fmt_vid_cap,
+       .vidioc_g_fmt_vid_cap = cx25821_vidioc_g_fmt_vid_cap,
+       .vidioc_try_fmt_vid_cap = cx25821_vidioc_try_fmt_vid_cap,
+       .vidioc_s_fmt_vid_cap = vidioc_s_fmt_vid_cap,
+       .vidioc_reqbufs = cx25821_vidioc_reqbufs,
+       .vidioc_querybuf = cx25821_vidioc_querybuf,
+       .vidioc_qbuf = cx25821_vidioc_qbuf,
+       .vidioc_dqbuf = vidioc_dqbuf,
+#ifdef TUNER_FLAG
+       .vidioc_s_std = cx25821_vidioc_s_std,
+       .vidioc_querystd = cx25821_vidioc_querystd,
+#endif
+       .vidioc_cropcap = cx25821_vidioc_cropcap,
+       .vidioc_s_crop = cx25821_vidioc_s_crop,
+       .vidioc_g_crop = cx25821_vidioc_g_crop,
+       .vidioc_enum_input = cx25821_vidioc_enum_input,
+       .vidioc_g_input = cx25821_vidioc_g_input,
+       .vidioc_s_input = cx25821_vidioc_s_input,
+       .vidioc_g_ctrl = cx25821_vidioc_g_ctrl,
+       .vidioc_s_ctrl = vidioc_s_ctrl,
+       .vidioc_queryctrl = cx25821_vidioc_queryctrl,
+       .vidioc_streamon = vidioc_streamon,
+       .vidioc_streamoff = vidioc_streamoff,
+       .vidioc_log_status = vidioc_log_status,
+       .vidioc_g_priority = cx25821_vidioc_g_priority,
+       .vidioc_s_priority = cx25821_vidioc_s_priority,
+#ifdef TUNER_FLAG
+       .vidioc_g_tuner = cx25821_vidioc_g_tuner,
+       .vidioc_s_tuner = cx25821_vidioc_s_tuner,
+       .vidioc_g_frequency = cx25821_vidioc_g_frequency,
+       .vidioc_s_frequency = cx25821_vidioc_s_frequency,
+#endif
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+       .vidioc_g_register = cx25821_vidioc_g_register,
+       .vidioc_s_register = cx25821_vidioc_s_register,
+#endif
+};
+
+struct video_device cx25821_videoioctl_template = {
+	       .name = "cx25821-videoioctl",
+	       .fops = &video_fops,
+	       .ioctl_ops = &video_ioctl_ops,
+	       .tvnorms = CX25821_NORMS,
+	       .current_norm = V4L2_STD_NTSC_M,
+};

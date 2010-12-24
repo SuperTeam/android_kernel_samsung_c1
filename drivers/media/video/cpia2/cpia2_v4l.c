@@ -526,138 +526,6 @@ static int sync(struct camera_data *cam, int frame_nr)
 
 /******************************************************************************
  *
- *  ioctl_set_window_size
- *
- *****************************************************************************/
-static int ioctl_set_window_size(void *arg, struct camera_data *cam,
-				 struct cpia2_fh *fh)
-{
-	/* copy_from_user, check validity, copy to internal structure */
-	struct video_window *vw;
-	int frame, err;
-	vw = arg;
-
-	if (vw->clipcount != 0)	/* clipping not supported */
-		return -EINVAL;
-
-	if (vw->clips != NULL)	/* clipping not supported */
-		return -EINVAL;
-
-	/* Ensure that only this process can change the format. */
-	err = v4l2_prio_change(&cam->prio, &fh->prio, V4L2_PRIORITY_RECORD);
-	if(err != 0)
-		return err;
-
-	cam->pixelformat = V4L2_PIX_FMT_JPEG;
-
-	/* Be sure to supply the Huffman tables, this isn't MJPEG */
-	cam->params.compression.inhibit_htables = 0;
-
-	/* we set the video window to something smaller or equal to what
-	 * is requested by the user???
-	 */
-	DBG("Requested width = %d, height = %d\n", vw->width, vw->height);
-	if (vw->width != cam->vw.width || vw->height != cam->vw.height) {
-		cam->vw.width = vw->width;
-		cam->vw.height = vw->height;
-		cam->params.roi.width = vw->width;
-		cam->params.roi.height = vw->height;
-		cpia2_set_format(cam);
-	}
-
-	for (frame = 0; frame < cam->num_frames; ++frame) {
-		if (cam->buffers[frame].status == FRAME_READING)
-			if ((err = sync(cam, frame)) < 0)
-				return err;
-
-		cam->buffers[frame].status = FRAME_EMPTY;
-	}
-
-	return 0;
-}
-
-/******************************************************************************
- *
- *  ioctl_get_mbuf
- *
- *****************************************************************************/
-static int ioctl_get_mbuf(void *arg, struct camera_data *cam)
-{
-	struct video_mbuf *vm;
-	int i;
-	vm = arg;
-
-	memset(vm, 0, sizeof(*vm));
-	vm->size = cam->frame_size*cam->num_frames;
-	vm->frames = cam->num_frames;
-	for (i = 0; i < cam->num_frames; i++)
-		vm->offsets[i] = cam->frame_size * i;
-
-	return 0;
-}
-
-/******************************************************************************
- *
- *  ioctl_mcapture
- *
- *****************************************************************************/
-static int ioctl_mcapture(void *arg, struct camera_data *cam,
-			  struct cpia2_fh *fh)
-{
-	struct video_mmap *vm;
-	int video_size, err;
-	vm = arg;
-
-	if (vm->frame < 0 || vm->frame >= cam->num_frames)
-		return -EINVAL;
-
-	/* set video size */
-	video_size = cpia2_match_video_size(vm->width, vm->height);
-	if (cam->video_size < 0) {
-		return -EINVAL;
-	}
-
-	/* Ensure that only this process can change the format. */
-	err = v4l2_prio_change(&cam->prio, &fh->prio, V4L2_PRIORITY_RECORD);
-	if(err != 0)
-		return err;
-
-	if (video_size != cam->video_size) {
-		cam->video_size = video_size;
-		cam->params.roi.width = vm->width;
-		cam->params.roi.height = vm->height;
-		cpia2_set_format(cam);
-	}
-
-	if (cam->buffers[vm->frame].status == FRAME_READING)
-		if ((err=sync(cam, vm->frame)) < 0)
-			return err;
-
-	cam->buffers[vm->frame].status = FRAME_EMPTY;
-
-	return cpia2_usb_stream_start(cam,cam->params.camera_state.stream_mode);
-}
-
-/******************************************************************************
- *
- *  ioctl_sync
- *
- *****************************************************************************/
-static int ioctl_sync(void *arg, struct camera_data *cam)
-{
-	int frame;
-
-	frame = *(int*)arg;
-
-	if (frame < 0 || frame >= cam->num_frames)
-		return -EINVAL;
-
-	return sync(cam, frame);
-}
-
-
-/******************************************************************************
- *
  *  ioctl_set_gpio
  *
  *****************************************************************************/
@@ -1599,16 +1467,6 @@ static long cpia2_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 		}
 		break;
 	}
-	case VIDIOCGMBUF:
-	case VIDIOCSYNC:
-	{
-		struct cpia2_fh *fh = file->private_data;
-		if(fh->prio != V4L2_PRIORITY_RECORD) {
-			mutex_unlock(&cam->busy_lock);
-			return -EBUSY;
-		}
-		break;
-	}
 	default:
 		break;
 	}
@@ -1635,41 +1493,6 @@ static long cpia2_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 		break;
 	case VIDIOCSWIN:
 		retval = ioctl_set_window_size(arg, cam, file->private_data);
-		break;
-	case VIDIOCGMBUF:	/* mmap interface */
-		retval = ioctl_get_mbuf(arg, cam);
-		break;
-	case VIDIOCMCAPTURE:
-		retval = ioctl_mcapture(arg, cam, file->private_data);
-		break;
-	case VIDIOCSYNC:
-		retval = ioctl_sync(arg, cam);
-		break;
-		/* pointless to implement overlay with this camera */
-	case VIDIOCCAPTURE:
-	case VIDIOCGFBUF:
-	case VIDIOCSFBUF:
-	case VIDIOCKEY:
-		retval = -EINVAL;
-		break;
-
-		/* tuner interface - we have none */
-	case VIDIOCGTUNER:
-	case VIDIOCSTUNER:
-	case VIDIOCGFREQ:
-	case VIDIOCSFREQ:
-		retval = -EINVAL;
-		break;
-
-		/* audio interface - we have none */
-	case VIDIOCGAUDIO:
-	case VIDIOCSAUDIO:
-		retval = -EINVAL;
-		break;
-
-	/* CPIA2 extension to Video4Linux API */
-	case CPIA2_IOC_SET_GPIO:
-		retval = ioctl_set_gpio(arg, cam);
 		break;
 	case VIDIOC_QUERYCAP:
 		retval = ioctl_querycap(arg,cam);
