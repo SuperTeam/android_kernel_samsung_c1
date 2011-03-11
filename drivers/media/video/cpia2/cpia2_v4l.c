@@ -530,7 +530,8 @@ static int sync(struct camera_data *cam, int frame_nr)
  *
  *****************************************************************************/
 
-static int ioctl_set_gpio(void *arg, struct camera_data *cam)
+static long cpia2_default(struct file *file, void *fh, bool valid_prio,
+			  int cmd, void *arg)
 {
 	__u32 gpio_val;
 
