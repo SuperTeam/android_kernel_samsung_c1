@@ -604,6 +604,7 @@ information.</para>
     &sub-yuv411p;
     &sub-nv12;
     &sub-nv16;
+    &sub-m420;
   </section>
 
   <section>
