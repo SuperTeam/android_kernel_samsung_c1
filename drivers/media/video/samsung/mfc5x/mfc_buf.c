@@ -675,6 +675,7 @@ mfc_alloc_buf(struct mfc_inst_ctx *ctx, struct mfc_buf_alloc_arg *args, int flag
 #else
 	args->offset = alloc->ofs;
 #endif
+	mfc_dbg("mfc_alloc_buf phys: 0x%08x addr: 0x%08x offset: 0x%08x\n", alloc->real, alloc->addr, alloc->ofs);
 	return MFC_OK;
 }
 
@@ -768,6 +769,7 @@ int mfc_free_buf(struct mfc_inst_ctx *ctx, unsigned int key)
 	unsigned long real;
 
 	real = mfc_get_buf_real(ctx->id, key);
+	mfc_dbg("mfc_free_buf key: %0x08x real: 0x%08x\n");
 	if (unlikely(real == 0))
 		return MFC_MEM_INVALID_ADDR_FAIL;
 

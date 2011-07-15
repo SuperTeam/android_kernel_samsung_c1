@@ -151,13 +151,11 @@ int mfc_set_inst_cfg(struct mfc_inst_ctx *ctx, unsigned int type, int *value)
 		precfg->type = type;
 		memcpy(precfg->value, value, sizeof(precfg->value));
 
-		/*
 		mfc_dbg("type: 0x%08x, precfg->type: 0x%08x", type, precfg->type);
 		mfc_dbg("value1: %d, precfg->value1: %d", value[0], precfg->value[0]);
 		mfc_dbg("value2: %d, precfg->value2: %d", value[1], precfg->value[1]);
 		mfc_dbg("value3: %d, precfg->value3: %d", value[2], precfg->value[2]);
 		mfc_dbg("value4: %d, precfg->value4: %d", value[3], precfg->value[3]);
-		*/
 
 		list_add_tail(&precfg->list, &ctx->presetcfgs);
 

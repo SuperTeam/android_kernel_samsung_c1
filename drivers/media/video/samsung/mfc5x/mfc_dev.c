@@ -274,6 +274,7 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	switch (cmd) {
 
 	case IOCTL_MFC_DEC_INIT:
+		mfc_dbg("MFC_DEC_INIT\n");
 		mutex_lock(&dev->lock);
 
 		if (mfc_chk_inst_state(mfc_ctx, INST_STATE_CREATE) < 0) {
@@ -294,7 +295,9 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IOCTL_MFC_ENC_INIT:
+		mfc_dbg("MFC_ENC_INIT\n");
 		mutex_lock(&dev->lock);
+		mfc_dbg("in_mapped_addr: 0x%08x\n", in_param.args.enc_init.cmn.in_mapped_addr);
 
 		if (mfc_chk_inst_state(mfc_ctx, INST_STATE_CREATE) < 0) {
 			mfc_err("IOCTL_MFC_ENC_INIT invalid state: 0x%08x\n",
@@ -310,32 +313,45 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		ret = in_param.ret_code;
 		mfc_clock_off();
 
+		mfc_dbg("out_u_addr: 0x%08x/0x%08x\n", in_param.args.enc_init.cmn.out_u_addr.strm_ref_y, in_param.args.enc_init.cmn.out_u_addr.mv_ref_yc);
+		mfc_dbg("out_p_addr: 0x%08x/0x%08x\n", in_param.args.enc_init.cmn.out_p_addr.strm_ref_y, in_param.args.enc_init.cmn.out_p_addr.mv_ref_yc);
+		mfc_dbg("out_buf_size: 0x%08x/0x%08x\n", in_param.args.enc_init.cmn.out_buf_size.strm_ref_y, in_param.args.enc_init.cmn.out_buf_size.mv_ref_yc);
 		mutex_unlock(&dev->lock);
 		break;
 
 	case IOCTL_MFC_DEC_EXE:
+		mfc_dbg("MFC_DEC_EXE\n");
 		mutex_lock(&dev->lock);
+		mfc_dbg("in_strm_buf: 0x%08x in_frm_buf: 0x%08x\n", in_param.args.dec_exe.in_strm_buf, in_param.args.dec_exe.in_frm_buf);
 
 		mfc_clock_on();
 		in_param.ret_code = mfc_exec_decoding(mfc_ctx, &(in_param.args));
 		ret = in_param.ret_code;
 		mfc_clock_off();
 
+		mfc_dbg("out_display_Y_addr: 0x%08x out_display_C_addr: 0x%08x\n", in_param.args.dec_exe.out_display_Y_addr, in_param.args.dec_exe.out_display_C_addr);
+		mfc_dbg("out_y_offset: 0x%08x out_c_offset: 0x%08x\n", in_param.args.dec_exe.out_y_offset, in_param.args.dec_exe.out_c_offset);
 		mutex_unlock(&dev->lock);
 		break;
 
 	case IOCTL_MFC_ENC_EXE:
+		mfc_dbg("MFC_ENC_EXE\n");
 		mutex_lock(&dev->lock);
+		mfc_dbg("in_Y_addr: 0x%08x in_CbCR_addr: 0x%08x\n", in_param.args.enc_exe.in_Y_addr, in_param.args.enc_exe.in_CbCr_addr);
+		mfc_dbg("out_Y_addr: 0x%08x out_CbCr_addr: 0x%08x\n", in_param.args.enc_exe.out_Y_addr, in_param.args.enc_exe.out_CbCr_addr);
 
 		mfc_clock_on();
 		in_param.ret_code = mfc_exec_encoding(mfc_ctx, &(in_param.args));
 		ret = in_param.ret_code;
 		mfc_clock_off();
 
+		mfc_dbg("in_Y_addr: 0x%08x in_CbCR_addr: 0x%08x\n", in_param.args.enc_exe.in_Y_addr, in_param.args.enc_exe.in_CbCr_addr);
+		mfc_dbg("out_Y_addr: 0x%08x out_CbCr_addr: 0x%08x\n", in_param.args.enc_exe.out_Y_addr, in_param.args.enc_exe.out_CbCr_addr);
 		mutex_unlock(&dev->lock);
 		break;
 
 	case IOCTL_MFC_GET_IN_BUF:
+		mfc_dbg("MFC_GET_IN_BUF\n");
 		if (in_param.args.mem_alloc.type == ENCODER) {
 			buf_arg.type = ENCODER;
 			port = 1;
@@ -363,11 +379,13 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 #else
 		in_param.args.mem_alloc.offset = buf_arg.offset;
 #endif
+		mfc_dbg("type: %s offset: 0x%08x\n", in_param.args.mem_alloc.type == ENCODER ? "ENCODER" : "DECODER", in_param.args.mem_alloc.offset);
 		ret = in_param.ret_code;
 
 		break;
 
 	case IOCTL_MFC_FREE_BUF:
+		mfc_dbg("MFC_FREE_BUF\n");
 		in_param.ret_code =
 			mfc_free_buf(mfc_ctx, in_param.args.mem_free.key);
 		ret = in_param.ret_code;
@@ -375,6 +393,8 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IOCTL_MFC_GET_REAL_ADDR:
+		mfc_dbg("MFC_GET_REAL_ADDR\n");
+		mfc_dbg("key: 0x%08x\n", in_param.args.real_addr.key);
 		in_param.args.real_addr.addr =
 			mfc_get_buf_real(mfc_ctx->id, in_param.args.real_addr.key);
 
@@ -390,6 +410,7 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IOCTL_MFC_GET_MMAP_SIZE:
+		mfc_dbg("MFC_GET_MMAP_SIZE\n");
 		if (mfc_chk_inst_state(mfc_ctx, INST_STATE_CREATE) < 0) {
 			mfc_err("IOCTL_MFC_GET_MMAP_SIZE invalid state: \
 				0x%08x\n", mfc_ctx->state);
@@ -432,6 +453,7 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 
 	case IOCTL_MFC_SET_CONFIG:
+		mfc_dbg("MFC_SET_CONFIG\n");
 		/* FIXME: mfc_chk_inst_state*/
 		/* RMVME: need locking ? */
 		mutex_lock(&dev->lock);
@@ -447,6 +469,7 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IOCTL_MFC_GET_CONFIG:
+		mfc_dbg("MFC_GET_CONFIG\n");
 		/* FIXME: */
 		/* FIXME: mfc_chk_inst_state */
 		/* RMVME: need locking ? */
@@ -456,6 +479,7 @@ static long mfc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case IOCTL_MFC_SET_BUF_CACHE:
+		mfc_dbg("MFC_SET_BUF_CACHE\n");
 		mfc_ctx->buf_cache_type = in_param.args.mem_alloc.buf_cache_type;
 		in_param.ret_code = MFC_OK;
 		break;
