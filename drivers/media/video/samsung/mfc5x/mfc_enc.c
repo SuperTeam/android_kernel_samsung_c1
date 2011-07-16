@@ -80,14 +80,18 @@ int get_init_arg(struct mfc_inst_ctx *ctx, void *arg)
 	else
 		enc_ctx->framemap = 0;	/* Default is Linear mode */
 
+	mfc_dbg("frame map: %s\n", init_arg->cmn.in_frame_map == NV12_TILE ? "tile" : "linear");
+
 	/* width */
 	write_reg(init_arg->cmn.in_width, MFC_ENC_HSIZE_PX);
 	/* height */
 	write_reg(init_arg->cmn.in_height, MFC_ENC_VSIZE_PX);
+	mfc_dbg("width: %d height: %d\n", init_arg->cmn.in_width, init_arg->cmn.in_height);
 
 	/* FIXME: MFC_B_RECON_*_ADR */
 	write_reg(0, MFC_ENC_B_RECON_WRITE_ON);
 
+	mfc_dbg("ms_mode: %d ms_arg: %d\n", init_arg->cmn.in_ms_mode, init_arg->cmn.in_ms_arg);
 	/* multi-slice control 0 / 1 / 3 */
 	/* multi-slice MB number or multi-slice bit size */
 	if (init_arg->cmn.in_ms_mode == 1) {
@@ -104,11 +108,13 @@ int get_init_arg(struct mfc_inst_ctx *ctx, void *arg)
 		write_reg(0, MFC_ENC_MSLICE_BIT);
 	}
 
+	mfc_dbg("in_mb_refresh: %d\n", init_arg->cmn.in_mb_refresh);
 	/* cyclic intra refresh */
 	write_reg(init_arg->cmn.in_mb_refresh & 0xFFFF, MFC_ENC_CIR_CTRL);
 	/* memory structure of the current frame - 0 -> Linear  or 3 -> Tile mode */
 	write_reg(enc_ctx->framemap, MFC_ENC_MAP_FOR_CUR);
 
+	mfc_dbg("in_pad_ctrl_on: %d in_cr_pad_val: %d in_cb_pad_val: %d in_y_pad_val: %d\n", init_arg->cmn.in_pad_ctrl_on, init_arg->cmn.in_cr_pad_val, init_arg->cmn.in_cb_pad_val, init_arg->cmn.in_y_pad_val);
 	/* padding control & value */
 	reg = read_reg(MFC_ENC_PADDING_CTRL);
 	if (init_arg->cmn.in_pad_ctrl_on > 0) {
@@ -129,6 +135,8 @@ int get_init_arg(struct mfc_inst_ctx *ctx, void *arg)
 	}
 	write_reg(reg, MFC_ENC_PADDING_CTRL);
 
+	mfc_dbg("in_rc_fr_en: %d in_rc_rpara: %d\n", init_arg->cmn.in_rc_fr_en, init_arg->cmn.in_rc_rpara);
+	mfc_dbg("in_rc_bitrate: %d in_rc_qbound_min: %d in_rc_qbound_max: %d\n", init_arg->cmn.in_rc_bitrate, init_arg->cmn.in_rc_qbound_min, init_arg->cmn.in_rc_qbound_max);
 	/* reaction coefficient */
 	if (init_arg->cmn.in_rc_fr_en > 0) {
 		if (init_arg->cmn.in_rc_rpara != 0)
@@ -136,6 +144,8 @@ int get_init_arg(struct mfc_inst_ctx *ctx, void *arg)
 	} else {
 		write_reg(0, MFC_ENC_RC_RPARA);
 	}
+	mfc_dbg("in_gop_num: %d in_vop_quant: %d in_vop_quant_p: %d\n", init_arg->cmn.in_gop_num, init_arg->cmn.in_vop_quant, init_arg->cmn.in_vop_quant_p);
+	mfc_dbg("in_mapped_addr: 0x%08x in_pixelcache: %d\n", init_arg->cmn.in_mapped_addr, init_arg->cmn.in_pixelcache);
 
 	/* FIXME: update shm parameters? */
 
