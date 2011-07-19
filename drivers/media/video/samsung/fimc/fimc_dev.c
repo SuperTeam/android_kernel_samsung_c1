@@ -1924,6 +1924,9 @@ static int __devinit fimc_probe(struct platform_device *pdev)
 		goto err_v4l2;
 	}
 
+#ifdef DEBUG
+    ctrl->vd->debug = V4L2_DEBUG_IOCTL | V4L2_DEBUG_IOCTL_ARG;
+#endif
 	video_set_drvdata(ctrl->vd, ctrl);
 
 #ifdef CONFIG_VIDEO_FIMC_RANGE_WIDE

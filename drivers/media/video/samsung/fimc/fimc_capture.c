@@ -215,6 +215,8 @@ static int fimc_init_camera(struct fimc_control *ctrl)
 	if (ctrl->cam->initialized)
 		return 0;
 
+    fimc_info1("%s", __func__);
+
 	/*
 	 * WriteBack mode doesn't need to set clock and power,
 	 * but it needs to set source width, height depend on LCD resolution.
@@ -511,6 +513,7 @@ int fimc_g_input(struct file *file, void *fh, unsigned int *i)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	struct fimc_global *fimc = get_fimc_dev();
 
+	fimc_info1("%s: called\n", __func__);
 	/* In case of isueing g_input before s_input */
 	if (!ctrl->cam) {
 		fimc_err("no camera device selected yet!" \
@@ -2085,7 +2088,7 @@ int fimc_qbuf_capture(void *fh, struct v4l2_buffer *b)
 	mutex_lock(&ctrl->v4l2_buf_lock);
 	if (pdata->hw_ver >= 0x51) {
 		if (cap->bufs[b->index].state != VIDEOBUF_IDLE) {
-			fimc_err("%s: invalid state b->index : %d\n", __func__, b->index);
+			fimc_err("%s: invalid state b->index : %d, state : %d\n", __func__, b->index, cap->bufs[b->index].state);
 			mutex_unlock(&ctrl->v4l2_buf_lock);
 			return -EINVAL;
 		} else {
@@ -2161,6 +2164,8 @@ int fimc_enum_framesizes(struct file *filp, void *fh, struct v4l2_frmsizeenum *f
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int i;
 	u32 index = 0;
+	fimc_info1("%s: called\n", __func__);
+
 	for (i = 0; i < ARRAY_SIZE(capture_fmts); i++) {
 		if (fsize->pixel_format != capture_fmts[i].pixelformat)
 			continue;
@@ -2181,6 +2186,7 @@ int fimc_enum_framesizes(struct file *filp, void *fh, struct v4l2_frmsizeenum *f
 }
 int fimc_enum_frameintervals(struct file *filp, void *fh, struct v4l2_frmivalenum *fival)
 {
+	printk(KERN_INFO "%s: called\n", __func__);
 	if (fival->index > 0)
 		return -EINVAL;
 	/* temporary only support 30fps */

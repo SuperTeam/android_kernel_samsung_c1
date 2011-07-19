@@ -46,6 +46,8 @@ static int fimc_reqbufs(struct file *filp, void *fh,
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
+
 	if (b->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_reqbufs_capture(ctrl, b);
 	} else if (b->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -64,6 +66,7 @@ static int fimc_querybuf(struct file *filp, void *fh, struct v4l2_buffer *b)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (b->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_querybuf_capture(ctrl, b);
 	} else if (b->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -82,6 +85,7 @@ static int fimc_g_ctrl(struct file *filp, void *fh, struct v4l2_control *c)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (ctrl->cap != NULL) {
 		ret = fimc_g_ctrl_capture(ctrl, c);
 	} else if (ctrl->out != NULL) {
@@ -99,6 +103,7 @@ static int fimc_g_ext_ctrls(struct file *filp, void *fh, struct v4l2_ext_control
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (ctrl->cap != NULL) {
 		ret = fimc_g_ext_ctrls_capture(ctrl, c);
 	} else if (ctrl->out != NULL) {
@@ -116,6 +121,7 @@ static int fimc_s_ctrl(struct file *filp, void *fh, struct v4l2_control *c)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (ctrl->cap != NULL) {
 		ret = fimc_s_ctrl_capture(ctrl, c);
 	} else if (ctrl->out != NULL) {
@@ -133,6 +139,7 @@ static int fimc_s_ext_ctrls(struct file *filp, void *fh, struct v4l2_ext_control
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (ctrl->cap != NULL) {
 		ret = fimc_s_ext_ctrls_capture(fh, c);
 	} else if (ctrl->out != NULL) {
@@ -150,6 +157,7 @@ static int fimc_cropcap(struct file *filp, void *fh, struct v4l2_cropcap *a)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (a->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_cropcap_capture(ctrl, a);
 	} else if (a->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -168,6 +176,7 @@ static int fimc_g_crop(struct file *filp, void *fh, struct v4l2_crop *a)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (a->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_g_crop_capture(ctrl, a);
 	} else if (a->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -185,6 +194,8 @@ static int fimc_s_crop(struct file *filp, void *fh, struct v4l2_crop *a)
 {
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
+
+	fimc_info1("%s: called\n", __func__);
 
 	if (a->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_s_crop_capture(ctrl, a);
@@ -204,6 +215,7 @@ static int fimc_streamon(struct file *filp, void *fh, enum v4l2_buf_type i)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (i == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_streamon_capture(ctrl);
 	} else if (i == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -222,6 +234,7 @@ static int fimc_streamoff(struct file *filp, void *fh, enum v4l2_buf_type i)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (i == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_streamoff_capture(ctrl);
 	} else if (i == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -240,6 +253,7 @@ static int fimc_qbuf(struct file *filp, void *fh, struct v4l2_buffer *b)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: type=%d, memory=%d, index=%d\n", __func__, b->type, b->memory, b->index);
 	if (b->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_qbuf_capture(ctrl, b);
 	} else if (b->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
@@ -258,6 +272,7 @@ static int fimc_dqbuf(struct file *filp, void *fh, struct v4l2_buffer *b)
 	struct fimc_control *ctrl = ((struct fimc_prv_data *)fh)->ctrl;
 	int ret = -1;
 
+	fimc_info1("%s: called\n", __func__);
 	if (b->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		ret = fimc_dqbuf_capture(ctrl, b);
 	} else if (b->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
